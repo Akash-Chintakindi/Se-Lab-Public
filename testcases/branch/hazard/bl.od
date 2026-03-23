@@ -1,0 +1,62 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <add_two_nums>:
+   0:	ab010000 	adds	x0, x0, x1
+   4:	d65f03c0 	ret
+
+0000000000000008 <start>:
+   8:	d10043ff 	sub	sp, sp, #0x10
+   c:	f80003fd 	stur	x29, [sp]
+  10:	f80083fe 	stur	x30, [sp, #8]
+  14:	910003fd 	mov	x29, sp
+  18:	d2807d01 	mov	x1, #0x3e8                 	// #1000
+  1c:	d2800c80 	mov	x0, #0x64                  	// #100
+  20:	94000000 	bl	0 <add_two_nums>
+  24:	d2800001 	mov	x1, #0x0                   	// #0
+  28:	aa2103e1 	mvn	x1, x1
+  2c:	f8000020 	stur	x0, [x1]
+  30:	f84083fe 	ldur	x30, [sp, #8]
+  34:	f84003fd 	ldur	x29, [sp]
+  38:	910043ff 	add	sp, sp, #0x10
+  3c:	d65f03c0 	ret
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	33312075 	.inst	0x33312075 ; undefined
+  10:	302e322e 	adr	x14, 5c655 <start+0x5c64d>
+  14:	7533322d 	.inst	0x7533322d ; undefined
+  18:	746e7562 	.inst	0x746e7562 ; undefined
+  1c:	20293475 	.inst	0x20293475 ; undefined
+  20:	322e3331 	orr	w17, w25, #0x7ffc0000
+  24:	Address 0x24 is out of bounds.
+
+
+Disassembly of section .eh_frame:
+
+0000000000000000 <.eh_frame>:
+   0:	00000010 	udf	#16
+   4:	00000000 	udf	#0
+   8:	00527a01 	.inst	0x00527a01 ; undefined
+   c:	011e7804 	.inst	0x011e7804 ; undefined
+  10:	001f0c1b 	.inst	0x001f0c1b ; undefined
+  14:	00000010 	udf	#16
+  18:	00000018 	udf	#24
+  1c:	00000000 	udf	#0
+  20:	00000008 	udf	#8
+  24:	00000000 	udf	#0
+  28:	0000001c 	udf	#28
+  2c:	0000002c 	udf	#44
+  30:	00000000 	udf	#0
+  34:	00000038 	udf	#56
+  38:	100e4300 	adr	x0, 1c898 <start+0x1c890>
+  3c:	019e029d 	.inst	0x019e029d ; undefined
+  40:	0eddde4a 	.inst	0x0eddde4a ; undefined
+  44:	00000000 	udf	#0

@@ -1,0 +1,120 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	d2989002 	mov	x2, #0xc480                	// #50304
+   4:	f2bcd442 	movk	x2, #0xe6a2, lsl #16
+   8:	f2dab222 	movk	x2, #0xd591, lsl #32
+   c:	f2fef662 	movk	x2, #0xf7b3, lsl #48
+  10:	d28001e6 	mov	x6, #0xf                   	// #15
+  14:	ca030063 	eor	x3, x3, x3
+  18:	ca010021 	eor	x1, x1, x1
+  1c:	1400002c 	b	cc <.loop_guard>
+
+0000000000000020 <.loop_body>:
+  20:	d37cec21 	lsl	x1, x1, #4
+  24:	ea060004 	ands	x4, x0, x6
+  28:	90000005 	adrp	x5, 0 <start>
+  2c:	910000a5 	add	x5, x5, #0x0
+  30:	d37df084 	lsl	x4, x4, #3
+  34:	ab0400a5 	adds	x5, x5, x4
+  38:	f84000a5 	ldur	x5, [x5]
+  3c:	d61f00a0 	br	x5
+
+0000000000000040 <.case_0>:
+  40:	1400001f 	b	bc <.post_switch>
+
+0000000000000044 <.case_1>:
+  44:	d344fc44 	lsr	x4, x2, #4
+  48:	1400001d 	b	bc <.post_switch>
+
+000000000000004c <.case_2>:
+  4c:	d348fc44 	lsr	x4, x2, #8
+  50:	1400001b 	b	bc <.post_switch>
+
+0000000000000054 <.case_3>:
+  54:	d34cfc44 	lsr	x4, x2, #12
+  58:	14000019 	b	bc <.post_switch>
+
+000000000000005c <.case_4>:
+  5c:	d350fc44 	lsr	x4, x2, #16
+  60:	14000017 	b	bc <.post_switch>
+
+0000000000000064 <.case_5>:
+  64:	d354fc44 	lsr	x4, x2, #20
+  68:	14000015 	b	bc <.post_switch>
+
+000000000000006c <.case_6>:
+  6c:	d358fc44 	lsr	x4, x2, #24
+  70:	14000013 	b	bc <.post_switch>
+
+0000000000000074 <.case_7>:
+  74:	d35cfc44 	lsr	x4, x2, #28
+  78:	14000011 	b	bc <.post_switch>
+
+000000000000007c <.case_8>:
+  7c:	d360fc44 	lsr	x4, x2, #32
+  80:	1400000f 	b	bc <.post_switch>
+
+0000000000000084 <.case_9>:
+  84:	d364fc44 	lsr	x4, x2, #36
+  88:	1400000d 	b	bc <.post_switch>
+
+000000000000008c <.case_10>:
+  8c:	d368fc44 	lsr	x4, x2, #40
+  90:	1400000b 	b	bc <.post_switch>
+
+0000000000000094 <.case_11>:
+  94:	d36cfc44 	lsr	x4, x2, #44
+  98:	14000009 	b	bc <.post_switch>
+
+000000000000009c <.case_12>:
+  9c:	d370fc44 	lsr	x4, x2, #48
+  a0:	14000007 	b	bc <.post_switch>
+
+00000000000000a4 <.case_13>:
+  a4:	d374fc44 	lsr	x4, x2, #52
+  a8:	14000005 	b	bc <.post_switch>
+
+00000000000000ac <.case_14>:
+  ac:	d378fc44 	lsr	x4, x2, #56
+  b0:	14000003 	b	bc <.post_switch>
+
+00000000000000b4 <.case_15>:
+  b4:	d37cfc44 	lsr	x4, x2, #60
+  b8:	14000001 	b	bc <.post_switch>
+
+00000000000000bc <.post_switch>:
+  bc:	ea060084 	ands	x4, x4, x6
+  c0:	aa040021 	orr	x1, x1, x4
+  c4:	d344fc00 	lsr	x0, x0, #4
+  c8:	91000463 	add	x3, x3, #0x1
+
+00000000000000cc <.loop_guard>:
+  cc:	eb06007f 	cmp	x3, x6
+  d0:	54fffa89 	b.ls	20 <.loop_body>  // b.plast
+  d4:	ab1f0020 	adds	x0, x1, xzr
+  d8:	d65f03c0 	ret
+
+Disassembly of section .rodata:
+
+0000000000000000 <.jump_table>:
+	...
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	33312075 	.inst	0x33312075 ; undefined
+  10:	302e322e 	adr	x14, 5c655 <.loop_guard+0x5c589>
+  14:	7533322d 	.inst	0x7533322d ; undefined
+  18:	746e7562 	.inst	0x746e7562 ; undefined
+  1c:	20293475 	.inst	0x20293475 ; undefined
+  20:	322e3331 	orr	w17, w25, #0x7ffc0000
+  24:	Address 0x24 is out of bounds.
+

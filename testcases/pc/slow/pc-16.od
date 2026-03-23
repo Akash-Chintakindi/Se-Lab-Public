@@ -1,0 +1,190 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0:	d10083ff 	sub	sp, sp, #0x20
+   4:	f80003fd 	stur	x29, [sp]
+   8:	f80083fe 	stur	x30, [sp, #8]
+   c:	910003fd 	mov	x29, sp
+  10:	f80103f3 	stur	x19, [sp, #16]
+  14:	90000000 	adrp	x0, 0 <main>
+  18:	91000000 	add	x0, x0, #0x0
+  1c:	d2800001 	mov	x1, #0x0                   	// #0
+  20:	d2820002 	mov	x2, #0x1000                	// #4096
+  24:	eb020021 	subs	x1, x1, x2
+  28:	ea010000 	ands	x0, x0, x1
+  2c:	ab020000 	adds	x0, x0, x2
+  30:	f80183e0 	stur	x0, [sp, #24]
+  34:	d2a00021 	mov	x1, #0x10000               	// #65536
+  38:	94000009 	bl	5c <init_data_slow>
+  3c:	f84183e0 	ldur	x0, [sp, #24]
+  40:	9400001e 	bl	b8 <chase_indices>
+  44:	d2800000 	mov	x0, #0x0                   	// #0
+  48:	f84103f3 	ldur	x19, [sp, #16]
+  4c:	f84003fd 	ldur	x29, [sp]
+  50:	f84083fe 	ldur	x30, [sp, #8]
+  54:	910083ff 	add	sp, sp, #0x20
+  58:	d65f03c0 	ret
+
+000000000000005c <init_data_slow>:
+  5c:	d2800003 	mov	x3, #0x0                   	// #0
+  60:	eb03003f 	cmp	x1, x3
+  64:	54000200 	b.eq	a4 <init_data_slow+0x48>  // b.none
+  68:	d2800004 	mov	x4, #0x0                   	// #0
+  6c:	d2800005 	mov	x5, #0x0                   	// #0
+  70:	d2800003 	mov	x3, #0x0                   	// #0
+  74:	14000002 	b	7c <init_data_slow+0x20>
+  78:	aa0203e5 	mov	x5, x2
+  7c:	910200a2 	add	x2, x5, #0x80
+  80:	eb02003f 	cmp	x1, x2
+  84:	9a848484 	cinc	x4, x4, ls	// ls = plast
+  88:	9a848042 	csel	x2, x2, x4, hi	// hi = pmore
+  8c:	d37df0a6 	lsl	x6, x5, #3
+  90:	ab060006 	adds	x6, x0, x6
+  94:	f80000c2 	stur	x2, [x6]
+  98:	91000463 	add	x3, x3, #0x1
+  9c:	eb03003f 	cmp	x1, x3
+  a0:	54fffec1 	b.ne	78 <init_data_slow+0x1c>  // b.any
+  a4:	d1000421 	sub	x1, x1, #0x1
+  a8:	d37df021 	lsl	x1, x1, #3
+  ac:	ab010001 	adds	x1, x0, x1
+  b0:	f800003f 	stur	xzr, [x1]
+  b4:	d65f03c0 	ret
+
+00000000000000b8 <chase_indices>:
+  b8:	d2800002 	mov	x2, #0x0                   	// #0
+  bc:	d2800001 	mov	x1, #0x0                   	// #0
+  c0:	d280ffe5 	mov	x5, #0x7ff                 	// #2047
+  c4:	91000442 	add	x2, x2, #0x1
+  c8:	d37df024 	lsl	x4, x1, #3
+  cc:	ab040004 	adds	x4, x0, x4
+  d0:	f8400081 	ldur	x1, [x4]
+  d4:	d37df024 	lsl	x4, x1, #3
+  d8:	ab040004 	adds	x4, x0, x4
+  dc:	f8400081 	ldur	x1, [x4]
+  e0:	d37df024 	lsl	x4, x1, #3
+  e4:	ab040004 	adds	x4, x0, x4
+  e8:	f8400081 	ldur	x1, [x4]
+  ec:	d37df024 	lsl	x4, x1, #3
+  f0:	ab040004 	adds	x4, x0, x4
+  f4:	f8400081 	ldur	x1, [x4]
+  f8:	d37df024 	lsl	x4, x1, #3
+  fc:	ab040004 	adds	x4, x0, x4
+ 100:	f8400081 	ldur	x1, [x4]
+ 104:	d37df024 	lsl	x4, x1, #3
+ 108:	ab040004 	adds	x4, x0, x4
+ 10c:	f8400081 	ldur	x1, [x4]
+ 110:	d37df024 	lsl	x4, x1, #3
+ 114:	ab040004 	adds	x4, x0, x4
+ 118:	f8400081 	ldur	x1, [x4]
+ 11c:	d37df024 	lsl	x4, x1, #3
+ 120:	ab040004 	adds	x4, x0, x4
+ 124:	f8400081 	ldur	x1, [x4]
+ 128:	d37df024 	lsl	x4, x1, #3
+ 12c:	ab040004 	adds	x4, x0, x4
+ 130:	f8400081 	ldur	x1, [x4]
+ 134:	d37df024 	lsl	x4, x1, #3
+ 138:	ab040004 	adds	x4, x0, x4
+ 13c:	f8400081 	ldur	x1, [x4]
+ 140:	d37df024 	lsl	x4, x1, #3
+ 144:	ab040004 	adds	x4, x0, x4
+ 148:	f8400081 	ldur	x1, [x4]
+ 14c:	d37df024 	lsl	x4, x1, #3
+ 150:	ab040004 	adds	x4, x0, x4
+ 154:	f8400081 	ldur	x1, [x4]
+ 158:	d37df024 	lsl	x4, x1, #3
+ 15c:	ab040004 	adds	x4, x0, x4
+ 160:	f8400081 	ldur	x1, [x4]
+ 164:	d37df024 	lsl	x4, x1, #3
+ 168:	ab040004 	adds	x4, x0, x4
+ 16c:	f8400081 	ldur	x1, [x4]
+ 170:	d37df024 	lsl	x4, x1, #3
+ 174:	ab040004 	adds	x4, x0, x4
+ 178:	f8400081 	ldur	x1, [x4]
+ 17c:	d37df024 	lsl	x4, x1, #3
+ 180:	ab040004 	adds	x4, x0, x4
+ 184:	f8400081 	ldur	x1, [x4]
+ 188:	d37df024 	lsl	x4, x1, #3
+ 18c:	ab040004 	adds	x4, x0, x4
+ 190:	f8400081 	ldur	x1, [x4]
+ 194:	d37df024 	lsl	x4, x1, #3
+ 198:	ab040004 	adds	x4, x0, x4
+ 19c:	f8400081 	ldur	x1, [x4]
+ 1a0:	d37df024 	lsl	x4, x1, #3
+ 1a4:	ab040004 	adds	x4, x0, x4
+ 1a8:	f8400081 	ldur	x1, [x4]
+ 1ac:	d37df024 	lsl	x4, x1, #3
+ 1b0:	ab040004 	adds	x4, x0, x4
+ 1b4:	f8400081 	ldur	x1, [x4]
+ 1b8:	d37df024 	lsl	x4, x1, #3
+ 1bc:	ab040004 	adds	x4, x0, x4
+ 1c0:	f8400081 	ldur	x1, [x4]
+ 1c4:	d37df024 	lsl	x4, x1, #3
+ 1c8:	ab040004 	adds	x4, x0, x4
+ 1cc:	f8400081 	ldur	x1, [x4]
+ 1d0:	d37df024 	lsl	x4, x1, #3
+ 1d4:	ab040004 	adds	x4, x0, x4
+ 1d8:	f8400081 	ldur	x1, [x4]
+ 1dc:	d37df024 	lsl	x4, x1, #3
+ 1e0:	ab040004 	adds	x4, x0, x4
+ 1e4:	f8400081 	ldur	x1, [x4]
+ 1e8:	d37df024 	lsl	x4, x1, #3
+ 1ec:	ab040004 	adds	x4, x0, x4
+ 1f0:	f8400081 	ldur	x1, [x4]
+ 1f4:	d37df024 	lsl	x4, x1, #3
+ 1f8:	ab040004 	adds	x4, x0, x4
+ 1fc:	f8400081 	ldur	x1, [x4]
+ 200:	d37df024 	lsl	x4, x1, #3
+ 204:	ab040004 	adds	x4, x0, x4
+ 208:	f8400081 	ldur	x1, [x4]
+ 20c:	d37df024 	lsl	x4, x1, #3
+ 210:	ab040004 	adds	x4, x0, x4
+ 214:	f8400081 	ldur	x1, [x4]
+ 218:	d37df024 	lsl	x4, x1, #3
+ 21c:	ab040004 	adds	x4, x0, x4
+ 220:	f8400081 	ldur	x1, [x4]
+ 224:	d37df024 	lsl	x4, x1, #3
+ 228:	ab040004 	adds	x4, x0, x4
+ 22c:	f8400081 	ldur	x1, [x4]
+ 230:	d37df024 	lsl	x4, x1, #3
+ 234:	ab040004 	adds	x4, x0, x4
+ 238:	f8400081 	ldur	x1, [x4]
+ 23c:	d37df024 	lsl	x4, x1, #3
+ 240:	ab040004 	adds	x4, x0, x4
+ 244:	f8400081 	ldur	x1, [x4]
+ 248:	d37df024 	lsl	x4, x1, #3
+ 24c:	ab040004 	adds	x4, x0, x4
+ 250:	f8400081 	ldur	x1, [x4]
+ 254:	eb05005f 	cmp	x2, x5
+ 258:	54fff369 	b.ls	c4 <chase_indices+0xc>  // b.plast
+ 25c:	eb1f003f 	cmp	x1, xzr
+ 260:	54fff321 	b.ne	c4 <chase_indices+0xc>  // b.any
+ 264:	d65f03c0 	ret
+
+Disassembly of section .data:
+
+0000000000000000 <mem>:
+	...
+
+0000000000000008 <data>:
+	...
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	694c2f75 	ldpsw	x21, x11, [x27, #96]
+  10:	6f72616e 	umlsl2	v14.4s, v11.8h, v2.h[3]
+  14:	352e3720 	cbnz	w0, 5c6f8 <chase_indices+0x5c640>
+  18:	332d302e 	.inst	0x332d302e ; undefined
+  1c:	6e756275 	rsubhn2	v21.8h, v19.4s, v21.4s
+  20:	7e317574 	.inst	0x7e317574 ; undefined
+  24:	302e3831 	adr	x17, 5c729 <chase_indices+0x5c671>
+  28:	37202934 	tbnz	w20, #4, 54c <chase_indices+0x494>
+  2c:	302e352e 	adr	x14, 5c6d1 <chase_indices+0x5c619>
+	...

@@ -1,0 +1,72 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	90000000 	adrp	x0, 0 <start>
+   4:	91000000 	add	x0, x0, #0x0
+   8:	d2800141 	mov	x1, #0xa                   	// #10
+   c:	d28000e2 	mov	x2, #0x7                   	// #7
+  10:	d2800003 	mov	x3, #0x0                   	// #0
+  14:	d2800004 	mov	x4, #0x0                   	// #0
+  18:	d1000424 	sub	x4, x1, #0x1
+
+000000000000001c <.loop>:
+  1c:	eb04007f 	cmp	x3, x4
+  20:	540002cc 	b.gt	78 <.end>
+  24:	d2800005 	mov	x5, #0x0                   	// #0
+  28:	eb030085 	subs	x5, x4, x3
+  2c:	9341fca5 	asr	x5, x5, #1
+  30:	ab050065 	adds	x5, x3, x5
+  34:	d37df0a7 	lsl	x7, x5, #3
+  38:	ab070006 	adds	x6, x0, x7
+  3c:	f84000c7 	ldur	x7, [x6]
+  40:	d29fffe9 	mov	x9, #0xffff                	// #65535
+  44:	d370bd29 	lsl	x9, x9, #16
+  48:	f29fffe9 	movk	x9, #0xffff
+  4c:	ea0900e7 	ands	x7, x7, x9
+  50:	eb0200ff 	cmp	x7, x2
+  54:	54000080 	b.eq	64 <.returnMid>  // b.none
+  58:	540000ca 	b.ge	70 <.decRight>  // b.tcont
+  5c:	910004a3 	add	x3, x5, #0x1
+  60:	17ffffef 	b	1c <.loop>
+
+0000000000000064 <.returnMid>:
+  64:	eb000000 	subs	x0, x0, x0
+  68:	ab050000 	adds	x0, x0, x5
+  6c:	d65f03c0 	ret
+
+0000000000000070 <.decRight>:
+  70:	d10004a4 	sub	x4, x5, #0x1
+  74:	17ffffea 	b	1c <.loop>
+
+0000000000000078 <.end>:
+  78:	d2800000 	mov	x0, #0x0                   	// #0
+  7c:	d1000400 	sub	x0, x0, #0x1
+  80:	d65f03c0 	ret
+
+Disassembly of section .data:
+
+0000000000000000 <.array>:
+   0:	00000001 	udf	#1
+   4:	00000000 	udf	#0
+   8:	00000003 	udf	#3
+   c:	00000000 	udf	#0
+  10:	00000005 	udf	#5
+  14:	00000000 	udf	#0
+  18:	00000007 	udf	#7
+  1c:	00000000 	udf	#0
+  20:	00000009 	udf	#9
+  24:	00000000 	udf	#0
+  28:	0000000b 	udf	#11
+  2c:	00000000 	udf	#0
+  30:	0000000d 	udf	#13
+  34:	00000000 	udf	#0
+  38:	0000000f 	udf	#15
+  3c:	00000000 	udf	#0
+  40:	00000011 	udf	#17
+  44:	00000000 	udf	#0
+  48:	00000013 	udf	#19
+  4c:	00000000 	udf	#0

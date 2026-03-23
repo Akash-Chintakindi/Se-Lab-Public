@@ -1,0 +1,16 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	f2802460 	movk	x0, #0x123
+   4:	f2a8ace0 	movk	x0, #0x4567, lsl #16
+   8:	f2d13560 	movk	x0, #0x89ab, lsl #32
+   c:	f2f9bde0 	movk	x0, #0xcdef, lsl #48
+  10:	d2800207 	mov	x7, #0x10                  	// #16
+  14:	9ac72401 	lsr	x1, x0, x7
+  18:	d2800a07 	mov	x7, #0x50                  	// #80
+  1c:	9ac72422 	lsr	x2, x1, x7
+  20:	d65f03c0 	ret

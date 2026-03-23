@@ -1,0 +1,44 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	d2800002 	mov	x2, #0x0                   	// #0
+   4:	ab020043 	adds	x3, x2, x2
+   8:	d28000c4 	mov	x4, #0x6                   	// #6
+   c:	90000000 	adrp	x0, 0 <start>
+  10:	91000400 	add	x0, x0, #0x1
+  14:	f8400001 	ldur	x1, [x0]
+  18:	eb040043 	subs	x3, x2, x4
+  1c:	d65f03c0 	ret
+
+Disassembly of section .data:
+
+0000000000000000 <x>:
+   0:	00000064 	udf	#100
+   4:	00000000 	udf	#0
+   8:	000000c8 	udf	#200
+   c:	00000000 	udf	#0
+  10:	0000012c 	udf	#300
+  14:	00000000 	udf	#0
+  18:	00000190 	udf	#400
+  1c:	00000000 	udf	#0
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	694c2f75 	ldpsw	x21, x11, [x27, #96]
+  10:	6f72616e 	umlsl2	v14.4s, v11.8h, v2.h[3]
+  14:	352e3720 	cbnz	w0, 5c6f8 <x+0x5c6f8>
+  18:	332d302e 	.inst	0x332d302e ; undefined
+  1c:	6e756275 	rsubhn2	v21.8h, v19.4s, v21.4s
+  20:	7e317574 	.inst	0x7e317574 ; undefined
+  24:	302e3831 	adr	x17, 5c729 <x+0x5c729>
+  28:	37202934 	tbnz	w20, #4, 54c <x+0x54c>
+  2c:	302e352e 	adr	x14, 5c6d1 <x+0x5c6d1>
+	...

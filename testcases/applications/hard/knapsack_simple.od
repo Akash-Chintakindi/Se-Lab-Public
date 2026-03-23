@@ -1,0 +1,116 @@
+
+knapsack_simple.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	d10403ff 	sub	sp, sp, #0x100
+   4:	aa3f03e7 	mvn	x7, xzr
+   8:	90000001 	adrp	x1, 0 <start>
+   c:	91000021 	add	x1, x1, #0x0
+  10:	90000002 	adrp	x2, 0 <start>
+  14:	91000042 	add	x2, x2, #0x0
+  18:	910003e0 	mov	x0, sp
+  1c:	91034005 	add	x5, x0, #0xd0
+  20:	14000003 	b	2c <.zero_loop_chk>
+
+0000000000000024 <.zero_loop_body>:
+  24:	f800001f 	stur	xzr, [x0]
+  28:	91002000 	add	x0, x0, #0x8
+
+000000000000002c <.zero_loop_chk>:
+  2c:	eb05001f 	cmp	x0, x5
+  30:	54ffffa1 	b.ne	24 <.zero_loop_body>  // b.any
+  34:	d2800003 	mov	x3, #0x0                   	// #0
+  38:	1400001c 	b	a8 <.j_loop_chk>
+
+000000000000003c <.j_loop_body>:
+  3c:	d2800344 	mov	x4, #0x1a                  	// #26
+  40:	14000017 	b	9c <.i_loop_chk>
+
+0000000000000044 <.i_loop_body>:
+  44:	d1000484 	sub	x4, x4, #0x1
+  48:	d37df060 	lsl	x0, x3, #3
+  4c:	ab010000 	adds	x0, x0, x1
+  50:	f8400000 	ldur	x0, [x0]
+  54:	eb000080 	subs	x0, x4, x0
+  58:	5400022b 	b.lt	9c <.i_loop_chk>  // b.tstop
+  5c:	d37df000 	lsl	x0, x0, #3
+  60:	910003e5 	mov	x5, sp
+  64:	ab050000 	adds	x0, x0, x5
+  68:	f8400000 	ldur	x0, [x0]
+  6c:	d37df065 	lsl	x5, x3, #3
+  70:	ab0200a5 	adds	x5, x5, x2
+  74:	f84000a5 	ldur	x5, [x5]
+  78:	ab050000 	adds	x0, x0, x5
+  7c:	910003e5 	mov	x5, sp
+  80:	d37df086 	lsl	x6, x4, #3
+  84:	ab0600a5 	adds	x5, x5, x6
+  88:	f84000a6 	ldur	x6, [x5]
+  8c:	eb06001f 	cmp	x0, x6
+  90:	5400004c 	b.gt	98 <.keep_x0>
+  94:	aa0603e0 	mov	x0, x6
+
+0000000000000098 <.keep_x0>:
+  98:	f80000a0 	stur	x0, [x5]
+
+000000000000009c <.i_loop_chk>:
+  9c:	eb1f009f 	cmp	x4, xzr
+  a0:	54fffd21 	b.ne	44 <.i_loop_body>  // b.any
+  a4:	91000463 	add	x3, x3, #0x1
+
+00000000000000a8 <.j_loop_chk>:
+  a8:	d2800149 	mov	x9, #0xa                   	// #10
+  ac:	eb09007f 	cmp	x3, x9
+  b0:	54fffc6b 	b.lt	3c <.j_loop_body>  // b.tstop
+  b4:	910323e0 	add	x0, sp, #0xc8
+  b8:	f8400000 	ldur	x0, [x0]
+  bc:	f80000e0 	stur	x0, [x7]
+  c0:	d65f03c0 	ret
+
+Disassembly of section .data:
+
+0000000000000000 <.weights>:
+   0:	0000000a 	udf	#10
+   4:	00000000 	udf	#0
+   8:	00000002 	udf	#2
+   c:	00000000 	udf	#0
+  10:	00000006 	udf	#6
+  14:	00000000 	udf	#0
+  18:	00000004 	udf	#4
+  1c:	00000000 	udf	#0
+  20:	00000007 	udf	#7
+  24:	00000000 	udf	#0
+  28:	00000005 	udf	#5
+  2c:	00000000 	udf	#0
+  30:	00000006 	udf	#6
+  34:	00000000 	udf	#0
+  38:	00000007 	udf	#7
+  3c:	00000000 	udf	#0
+  40:	00000008 	udf	#8
+  44:	00000000 	udf	#0
+  48:	00000002 	udf	#2
+  4c:	00000000 	udf	#0
+
+0000000000000050 <.values>:
+  50:	00000003 	udf	#3
+  54:	00000000 	udf	#0
+  58:	0000000a 	udf	#10
+  5c:	00000000 	udf	#0
+  60:	00000003 	udf	#3
+  64:	00000000 	udf	#0
+  68:	00000009 	udf	#9
+  6c:	00000000 	udf	#0
+  70:	00000003 	udf	#3
+  74:	00000000 	udf	#0
+  78:	00000003 	udf	#3
+  7c:	00000000 	udf	#0
+  80:	00000004 	udf	#4
+  84:	00000000 	udf	#0
+  88:	00000008 	udf	#8
+  8c:	00000000 	udf	#0
+  90:	00000007 	udf	#7
+  94:	00000000 	udf	#0
+  98:	00000008 	udf	#8
+  9c:	00000000 	udf	#0

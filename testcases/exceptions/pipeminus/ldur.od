@@ -1,0 +1,55 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	d2820000 	mov	x0, #0x1000                	// #4096
+   4:	d29579a1 	mov	x1, #0xabcd                	// #43981
+   8:	d503201f 	nop
+   c:	d503201f 	nop
+  10:	d503201f 	nop
+  14:	f8400002 	ldur	x2, [x0]
+  18:	d503201f 	nop
+  1c:	d503201f 	nop
+  20:	d503201f 	nop
+  24:	91000400 	add	x0, x0, #0x1
+  28:	d503201f 	nop
+  2c:	d503201f 	nop
+  30:	d503201f 	nop
+  34:	f8400003 	ldur	x3, [x0]
+  38:	d503201f 	nop
+  3c:	d503201f 	nop
+  40:	d503201f 	nop
+  44:	ca0500a5 	eor	x5, x5, x5
+  48:	d503201f 	nop
+  4c:	d503201f 	nop
+  50:	d503201f 	nop
+  54:	aa2503e5 	mvn	x5, x5
+  58:	d503201f 	nop
+  5c:	d503201f 	nop
+  60:	d503201f 	nop
+  64:	f80000a2 	stur	x2, [x5]
+  68:	d503201f 	nop
+  6c:	d503201f 	nop
+  70:	d503201f 	nop
+  74:	f80000a3 	stur	x3, [x5]
+  78:	d65f03c0 	ret
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	694c2f75 	ldpsw	x21, x11, [x27, #96]
+  10:	6f72616e 	umlsl2	v14.4s, v11.8h, v2.h[3]
+  14:	352e3720 	cbnz	w0, 5c6f8 <start+0x5c6f8>
+  18:	332d302e 	.inst	0x332d302e ; undefined
+  1c:	6e756275 	rsubhn2	v21.8h, v19.4s, v21.4s
+  20:	7e317574 	.inst	0x7e317574 ; undefined
+  24:	302e3831 	adr	x17, 5c729 <start+0x5c729>
+  28:	37202934 	tbnz	w20, #4, 54c <start+0x54c>
+  2c:	302e352e 	adr	x14, 5c6d1 <start+0x5c6d1>
+	...

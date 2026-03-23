@@ -1,0 +1,59 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <foo>:
+   0:	910003c1 	add	x1, x30, #0x0
+   4:	9101ec42 	add	x2, x2, #0x7b
+   8:	9103a863 	add	x3, x3, #0xea
+   c:	91056484 	add	x4, x4, #0x159
+  10:	d65f0020 	ret	x1
+  14:	d503201f 	nop
+  18:	d503201f 	nop
+  1c:	d503201f 	nop
+
+0000000000000020 <start>:
+  20:	90000000 	adrp	x0, 20 <start>
+  24:	d10043ff 	sub	sp, sp, #0x10
+  28:	d503201f 	nop
+  2c:	d503201f 	nop
+  30:	d503201f 	nop
+  34:	f80003fe 	stur	x30, [sp]
+  38:	d503201f 	nop
+  3c:	d503201f 	nop
+  40:	d503201f 	nop
+  44:	94000000 	bl	0 <foo>
+  48:	d503201f 	nop
+  4c:	d503201f 	nop
+  50:	d503201f 	nop
+  54:	91000000 	add	x0, x0, #0x0
+  58:	f84003fe 	ldur	x30, [sp]
+  5c:	910043ff 	add	sp, sp, #0x10
+  60:	9100a000 	add	x0, x0, #0x28
+  64:	d503201f 	nop
+  68:	d503201f 	nop
+  6c:	d503201f 	nop
+  70:	d65f0000 	ret	x0
+  74:	d503201f 	nop
+  78:	d503201f 	nop
+  7c:	d503201f 	nop
+  80:	d65f03c0 	ret
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	694c2f75 	ldpsw	x21, x11, [x27, #96]
+  10:	6f72616e 	umlsl2	v14.4s, v11.8h, v2.h[3]
+  14:	352e3720 	cbnz	w0, 5c6f8 <start+0x5c6d8>
+  18:	332d302e 	.inst	0x332d302e ; undefined
+  1c:	6e756275 	rsubhn2	v21.8h, v19.4s, v21.4s
+  20:	7e317574 	.inst	0x7e317574 ; undefined
+  24:	302e3831 	adr	x17, 5c729 <start+0x5c709>
+  28:	37202934 	tbnz	w20, #4, 54c <start+0x52c>
+  2c:	302e352e 	adr	x14, 5c6d1 <start+0x5c6b1>
+	...

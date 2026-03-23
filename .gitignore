@@ -1,0 +1,15 @@
+*.o
+se
+test-se
+csim
+test-csim
+test-hw
+*.txt
+*.out
+*.log
+.clang-format
+example
+example.sh
+rename.sh
+.vscode/settings.json
+build/

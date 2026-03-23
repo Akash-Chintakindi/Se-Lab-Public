@@ -1,0 +1,30 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	d2800020 	mov	x0, #0x1                   	// #1
+   4:	d2800001 	mov	x1, #0x0                   	// #0
+   8:	aa2103e1 	mvn	x1, x1
+   c:	91000442 	add	x2, x2, #0x1
+  10:	ab00003f 	cmn	x1, x0
+  14:	d65f03c0 	ret
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	694c2f75 	ldpsw	x21, x11, [x27, #96]
+  10:	6f72616e 	umlsl2	v14.4s, v11.8h, v2.h[3]
+  14:	352e3720 	cbnz	w0, 5c6f8 <start+0x5c6f8>
+  18:	332d302e 	.inst	0x332d302e ; undefined
+  1c:	6e756275 	rsubhn2	v21.8h, v19.4s, v21.4s
+  20:	7e317574 	.inst	0x7e317574 ; undefined
+  24:	302e3831 	adr	x17, 5c729 <start+0x5c729>
+  28:	37202934 	tbnz	w20, #4, 54c <start+0x54c>
+  2c:	302e352e 	adr	x14, 5c6d1 <start+0x5c6d1>
+	...

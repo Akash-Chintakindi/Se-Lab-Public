@@ -1,0 +1,45 @@
+
+hello.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	f29579a0 	movk	x0, #0xabcd
+   4:	d503201f 	nop
+   8:	d503201f 	nop
+   c:	d503201f 	nop
+  10:	d370bc00 	lsl	x0, x0, #16
+  14:	d503201f 	nop
+  18:	d503201f 	nop
+  1c:	d503201f 	nop
+  20:	f29b9740 	movk	x0, #0xdcba
+  24:	d503201f 	nop
+  28:	d503201f 	nop
+  2c:	d503201f 	nop
+  30:	ca0500a5 	eor	x5, x5, x5
+  34:	d503201f 	nop
+  38:	d503201f 	nop
+  3c:	d503201f 	nop
+  40:	aa2503e5 	mvn	x5, x5
+  44:	d503201f 	nop
+  48:	d503201f 	nop
+  4c:	d503201f 	nop
+  50:	f80000a0 	stur	x0, [x5]
+  54:	d503201f 	nop
+  58:	d503201f 	nop
+  5c:	d503201f 	nop
+  60:	ca010021 	eor	x1, x1, x1
+  64:	d503201f 	nop
+  68:	d503201f 	nop
+  6c:	d503201f 	nop
+  70:	ab010001 	adds	x1, x0, x1
+  74:	d503201f 	nop
+  78:	d503201f 	nop
+  7c:	d503201f 	nop
+  80:	f2824681 	movk	x1, #0x1234
+  84:	d503201f 	nop
+  88:	d503201f 	nop
+  8c:	d503201f 	nop
+  90:	f80000a1 	stur	x1, [x5]
+  94:	d65f03c0 	ret

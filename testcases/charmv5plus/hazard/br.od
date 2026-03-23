@@ -1,0 +1,20 @@
+
+hello.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	d2800140 	mov	x0, #0xa                   	// #10
+   4:	90000001 	adrp	x1, 0 <start>
+   8:	91000021 	add	x1, x1, #0x0
+   c:	d61f0020 	br	x1
+
+0000000000000010 <.wrong>:
+  10:	d28175a2 	mov	x2, #0xbad                 	// #2989
+  14:	d28000a3 	mov	x3, #0x5                   	// #5
+  18:	d65f03c0 	ret
+
+000000000000001c <.correct>:
+  1c:	d2800284 	mov	x4, #0x14                  	// #20
+  20:	d65f03c0 	ret

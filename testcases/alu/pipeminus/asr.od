@@ -1,0 +1,46 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <start>:
+   0:	f29fffe0 	movk	x0, #0xffff
+   4:	d503201f 	nop
+   8:	d503201f 	nop
+   c:	d503201f 	nop
+  10:	f2bfffe0 	movk	x0, #0xffff, lsl #16
+  14:	d503201f 	nop
+  18:	d503201f 	nop
+  1c:	d503201f 	nop
+  20:	f2dfffe0 	movk	x0, #0xffff, lsl #32
+  24:	d503201f 	nop
+  28:	d503201f 	nop
+  2c:	d503201f 	nop
+  30:	f2efffe0 	movk	x0, #0x7fff, lsl #48
+  34:	d503201f 	nop
+  38:	d503201f 	nop
+  3c:	d503201f 	nop
+  40:	9340fc01 	asr	x1, x0, #0
+  44:	9360fc02 	asr	x2, x0, #32
+  48:	937ffc03 	asr	x3, x0, #63
+  4c:	f29fffe4 	movk	x4, #0xffff
+  50:	d503201f 	nop
+  54:	d503201f 	nop
+  58:	d503201f 	nop
+  5c:	f2bfffe4 	movk	x4, #0xffff, lsl #16
+  60:	d503201f 	nop
+  64:	d503201f 	nop
+  68:	d503201f 	nop
+  6c:	f2dfffe4 	movk	x4, #0xffff, lsl #32
+  70:	d503201f 	nop
+  74:	d503201f 	nop
+  78:	d503201f 	nop
+  7c:	f2ffffe4 	movk	x4, #0xffff, lsl #48
+  80:	d503201f 	nop
+  84:	d503201f 	nop
+  88:	d503201f 	nop
+  8c:	9340fc85 	asr	x5, x4, #0
+  90:	9360fc86 	asr	x6, x4, #32
+  94:	937ffc87 	asr	x7, x4, #63
+  98:	d65f03c0 	ret
