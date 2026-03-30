@@ -88,7 +88,7 @@ static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
  */
 comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     bool imem_err = 0;
-    uint64_t current_PC;
+    uint64_t current_PC = 0;
 
     // Student TODO: Comment this line back in and fill in parameters
     // select_PC();

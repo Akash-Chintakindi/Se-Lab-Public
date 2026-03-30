@@ -9,7 +9,7 @@ LD = gcc
 MD = gccmakedep
 
 # Compiler flags
-CC_FLAGS = -Wall -Wextra -Werror -Wno-unused-parameter -g3 -pthread
+CC_FLAGS = -Wall -Wextra -Werror -Wno-unused-parameter -g3 -pthread -Wno-unused-function
 CC_OPTIONS = -c
 CC_SO_OPTIONS = -shared -fpic
 CC_DL_OPTIONS = -rdynamic
