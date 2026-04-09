@@ -32,6 +32,44 @@ extern bool X_set_flags;
  * copy_m_ctl_signals, copy_w_ctl_signals, and alu.
  */
 comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
-    // Student TODO
+    // Pass through metadata
+    out->op       = in->op;
+    out->print_op = in->print_op;
+    out->status   = in->status;
+    out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
+    out->dst      = in->dst;
+    out->val_b    = in->val_b;
+
+    // Copy control signals to M and W stages
+    copy_m_ctl_sigs(&out->M_sigs, &in->M_sigs);
+    copy_w_ctl_sigs(&out->W_sigs, &in->W_sigs);
+
+    // Select val_a: vala_sel=1 uses multipurpose_val (for BL/ADRP), else val_a
+    uint64_t alu_vala = in->X_sigs.vala_sel
+                      ? in->multipurpose_val.seq_succ_PC
+                      : in->val_a;
+
+    // Select val_b: valb_sel=1 uses register val_b, else immediate val_imm
+    uint64_t alu_valb = in->X_sigs.valb_sel
+                      ? in->val_b
+                      : (uint64_t)in->val_imm;
+
+    // Run the ALU
+    uint64_t val_ex  = 0;
+    bool     cond_holds = false;
+    uint8_t  nzcv_out   = 0;
+
+    alu(alu_vala, alu_valb, in->val_hw,
+        guest.proc->NZCV,
+        in->ALU_op, in->X_sigs.set_flags, in->cond,
+        &val_ex, &cond_holds, &nzcv_out);
+
+    out->val_ex    = val_ex;
+    out->cond_holds = cond_holds;
+
+    // Update global wires for NZCV
+    X_nzcvval  = nzcv_out;
+    X_set_flags = in->X_sigs.set_flags;
+
     return;
 }

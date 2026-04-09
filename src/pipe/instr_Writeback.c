@@ -22,6 +22,7 @@ extern int64_t W_wval;
  * You will need the global variable W_wval.
  */
 comb_logic_t wback_instr(w_instr_impl_t *in) {
-    // Student TODO
+    // Select write value: wval_sel=1 means use val_mem (LDUR), else val_ex (ALU)
+    W_wval = (int64_t)(in->W_sigs.wval_sel ? in->val_mem : in->val_ex);
     return;
 }

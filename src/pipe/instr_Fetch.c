@@ -8,6 +8,7 @@
 #include "instr.h"
 #include "instr_pipeline.h"
 #include "machine.h"
+#include "mem.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -37,6 +38,23 @@ select_PC(uint64_t pred_PC,                  // The predicted PC
         return;
     }
     // Modify starting here.
+
+#ifdef PIPE
+    // RET: use the register value as the return address
+    if (D_opcode == OP_RET) {
+        *current_PC = val_a;
+        return;
+    }
+
+    // B.cond misprediction correction: we predicted taken but condition didn't hold
+    if (M_opcode == OP_B_COND && !M_cond_val) {
+        *current_PC = seq_succ;
+        return;
+    }
+#endif
+
+    // Default: use predicted PC
+    *current_PC = pred_PC;
     return;
 }
 
@@ -58,6 +76,30 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
         return; // We use this to generate a halt instruction.
     }
     // Modify starting here.
+
+    // Sequential successor is always PC + 4
+    *seq_succ = current_PC + 4;
+
+    switch (op) {
+        case OP_B:
+        case OP_BL: {
+            // FORMAT_B1: 26-bit signed immediate offset, shifted left by 2
+            int64_t offset = bitfield_s64((int32_t)insnbits, 0, 26) << 2;
+            *predicted_PC = (uint64_t)((int64_t)current_PC + offset);
+            break;
+        }
+        case OP_B_COND: {
+            // FORMAT_B2: 19-bit signed immediate offset at bits[23:5], shifted by 2
+            // Predict taken
+            int64_t offset = bitfield_s64((int32_t)insnbits, 5, 19) << 2;
+            *predicted_PC = (uint64_t)((int64_t)current_PC + offset);
+            break;
+        }
+        default:
+            // All other instructions: predict sequential
+            *predicted_PC = current_PC + 4;
+            break;
+    }
     return;
 }
 
@@ -69,7 +111,39 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
  * STUDENT TO-DO
  */
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
-    // Student TODO
+    if (*op == OP_UBFM) {
+        // Distinguish LSL_RI from LSR_RI
+        // LSR: immr = shift, imms = 63
+        // LSL: imms = 63 - shift, immr = 64 - shift (mod 64)
+        uint32_t imms = bitfield_u32((int32_t)insnbits, 10, 6); // bits[15:10]
+        if (imms == 63) {
+            *op = OP_LSR_RI;
+        } else {
+            *op = OP_LSL_RI;
+        }
+        return;
+    }
+
+    if (*op == OP_UBFMV) {
+        // Distinguish LSL_RR from LSR_RR via bits[11:10] (shift type field)
+        uint32_t shift_type = bitfield_u32((int32_t)insnbits, 10, 2);
+        if (shift_type == 0) {
+            *op = OP_LSL_RR;
+        } else {
+            *op = OP_LSR_RR;
+        }
+        return;
+    }
+
+    // CMP = SUBS with Rd = XZR (31)
+    // CMN = ADDS with Rd = XZR (31)
+    // TST = ANDS with Rd = XZR (31)
+    uint8_t rd = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);
+    if (rd == 31) {
+        if (*op == OP_SUBS_RR) *op = OP_CMP_RR;
+        else if (*op == OP_ADDS_RR) *op = OP_CMN_RR;
+        else if (*op == OP_ANDS_RR) *op = OP_TST_RR;
+    }
     return;
 }
 
@@ -90,22 +164,72 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     bool imem_err = 0;
     uint64_t current_PC = 0;
 
-    // Student TODO: Comment this line back in and fill in parameters
-    // select_PC();
-    
+    // For select_PC's framework check: val_a is the register value for RET
+    uint64_t val_a = in->pred_PC;
+
+    select_PC(in->pred_PC,
+              D_out->op, val_a,
+              D_out->multipurpose_val.seq_succ_PC,
+              M_out->op, M_out->cond_holds,
+              M_out->multipurpose_val.seq_succ_PC,
+              &current_PC);
+
     /*
      * Students: This case is for generating HLT instructions
      * to stop the pipeline. Only write your code in the **else** case.
      */
-    if (!current_PC || F_in->status == STAT_HLT) {
+    if (!current_PC || F_in->status == STAT_HLT || F_in->status == STAT_INS) {
         out->insnbits = 0xD4400000U;
         out->op = OP_HLT;
         out->print_op = OP_HLT;
         out->format = ftable[out->op];
         imem_err = false;
     } else {
-        // Student TODO
+        // Fetch instruction from instruction memory
+        imem(current_PC, &out->insnbits, &imem_err);
 
+        // Always update F_PC to sequential successor
+        F_PC = current_PC + 4;
+
+        if (!imem_err) {
+            // Decode opcode from top 11 bits
+            uint32_t top11 = bitfield_u32((int32_t)out->insnbits, 21, 11);
+            out->op = itable[top11];
+            out->print_op = out->op;
+
+            // Fix aliased instructions (LSL/LSR/CMP/CMN/TST)
+            fix_instr_aliases(out->insnbits, &out->op);
+            out->print_op = out->op;
+
+            // Look up instruction format
+            out->format = (out->op != OP_ERROR) ? ftable[out->op] : FORMAT_ERROR;
+
+            // Compute predicted PC and sequential successor
+            uint64_t predicted_PC = current_PC + 4;
+            uint64_t seq_succ = current_PC + 4;
+            predict_PC(current_PC, out->insnbits, out->op, &predicted_PC, &seq_succ);
+
+            // Store predicted PC for next cycle
+            F_PC = predicted_PC;
+
+            // Store multipurpose value
+            if (out->op == OP_ADRP) {
+                // ADRP: compute page-relative address
+                // imm21 = immhi[18:0]:immlo[1:0] (sign-extended, then << 12)
+                uint32_t immhi = bitfield_u32((int32_t)out->insnbits, 5, 19);  // bits[23:5]
+                uint32_t immlo = bitfield_u32((int32_t)out->insnbits, 29, 2);  // bits[30:29]
+                int64_t imm21 = bitfield_s64((int32_t)((immhi << 2) | immlo), 0, 21);
+                out->multipurpose_val.adrp_val =
+                    (current_PC & ~0xFFFULL) + (uint64_t)((int64_t)imm21 << 12);
+            } else {
+                out->multipurpose_val.seq_succ_PC = seq_succ;
+            }
+        } else {
+            // imem error: set error fields
+            out->op = OP_ERROR;
+            out->print_op = OP_ERROR;
+            out->format = FORMAT_ERROR;
+        }
     }
 
     if (imem_err || out->op == OP_ERROR) {

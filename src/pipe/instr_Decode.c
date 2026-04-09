@@ -30,7 +30,142 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                                           x_ctl_sigs_t *X_sigs,
                                           m_ctl_sigs_t *M_sigs,
                                           w_ctl_sigs_t *W_sigs) {
-    // Student TODO
+    // Initialize all signals to safe defaults
+    D_sigs->src2_sel  = false;
+    X_sigs->vala_sel  = false;
+    X_sigs->valb_sel  = false;
+    X_sigs->set_flags = false;
+    M_sigs->dmem_read  = false;
+    M_sigs->dmem_write = false;
+    W_sigs->dst_sel  = false;
+    W_sigs->wval_sel = false;
+    W_sigs->w_enable = false;
+
+    switch (op) {
+        // --- Memory ---
+        case OP_LDUR:
+            // valb_sel=0 (use immediate offset), dmem_read=1, wval_sel=1, w_enable=1
+            X_sigs->valb_sel  = false; // use immediate
+            M_sigs->dmem_read = true;
+            W_sigs->wval_sel  = true;  // writeback from memory
+            W_sigs->w_enable  = true;
+            break;
+
+        case OP_STUR:
+            // src2_sel=1 (src2 = Rt for store data), valb_sel=0, dmem_write=1
+            D_sigs->src2_sel   = true;  // src2 is Rt (data to store)
+            X_sigs->valb_sel   = false; // use immediate for address calc
+            M_sigs->dmem_write = true;
+            break;
+
+        // --- Move (immediate) ---
+        case OP_MOVZ:
+            // vala_sel=0, valb_sel=0 (use imm/hw), w_enable=1
+            X_sigs->valb_sel = false;
+            W_sigs->w_enable = true;
+            break;
+
+        case OP_MOVK:
+            // vala_sel=0 (use Rd as read reg for lower bits), valb_sel=0, w_enable=1
+            X_sigs->valb_sel = false;
+            W_sigs->w_enable = true;
+            break;
+
+        // --- ADRP ---
+        case OP_ADRP:
+            // vala_sel=1 (use multipurpose_val = adrp_val), w_enable=1
+            X_sigs->vala_sel = true;
+            W_sigs->w_enable = true;
+            break;
+
+        // --- Arithmetic (register-immediate) ---
+        case OP_ADD_RI:
+        case OP_SUB_RI:
+            X_sigs->valb_sel = false; // use immediate
+            W_sigs->w_enable = true;
+            break;
+
+        // --- Arithmetic (register-register, flag-setting) ---
+        case OP_ADDS_RR:
+        case OP_CMN_RR:
+            X_sigs->valb_sel  = true;  // use register Rm
+            X_sigs->set_flags = true;
+            W_sigs->w_enable  = (op == OP_ADDS_RR); // CMN doesn't write back
+            break;
+
+        case OP_SUBS_RR:
+        case OP_CMP_RR:
+            X_sigs->valb_sel  = true;
+            X_sigs->set_flags = true;
+            W_sigs->w_enable  = (op == OP_SUBS_RR); // CMP doesn't write back
+            break;
+
+        // --- Logical ---
+        case OP_MVN:
+            X_sigs->valb_sel = true;  // Rm is in valb
+            W_sigs->w_enable = true;
+            break;
+
+        case OP_ORR_RR:
+        case OP_EOR_RR:
+            X_sigs->valb_sel = true;
+            W_sigs->w_enable = true;
+            break;
+
+        case OP_ANDS_RR:
+        case OP_TST_RR:
+            X_sigs->valb_sel  = true;
+            X_sigs->set_flags = true;
+            W_sigs->w_enable  = (op == OP_ANDS_RR); // TST doesn't write back
+            break;
+
+        // --- Shifts (immediate) ---
+        case OP_LSL_RI:
+        case OP_LSR_RI:
+        case OP_ASR:
+            X_sigs->valb_sel = false; // use immediate (shift amount)
+            W_sigs->w_enable = true;
+            break;
+
+        // --- Shifts (register) ---
+        case OP_LSL_RR:
+        case OP_LSR_RR:
+            X_sigs->valb_sel = true;  // Rm has shift amount
+            W_sigs->w_enable = true;
+            break;
+
+        // --- Control transfer ---
+        case OP_B:
+            // Unconditional branch: no writeback
+            // vala_sel=1 (use PC), valb_sel=0 (use immediate offset for target)
+            // Actually ALU is not needed; PC correction happens in fetch via pred_PC
+            break;
+
+        case OP_BL:
+            // Branch and link: write return address (seq_succ_PC) to X30
+            // vala_sel=1 (use multipurpose_val = seq_succ_PC as value to write)
+            X_sigs->vala_sel = true;
+            W_sigs->dst_sel  = true;   // dst = X30 (register 30)
+            W_sigs->w_enable = true;
+            break;
+
+        case OP_B_COND:
+            // Conditional branch: set_flags not needed (uses existing NZCV)
+            // No writeback
+            break;
+
+        case OP_RET:
+            // Return: uses val_a (register Rn), no writeback
+            break;
+
+        // --- NOP/HLT ---
+        case OP_NOP:
+        case OP_HLT:
+            break;
+
+        default:
+            break;
+    }
     return;
 }
 
@@ -42,7 +177,51 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
  */
 static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
                                    int64_t *imm) {
-    // Student TODO
+    *imm = 0;
+
+    switch (op) {
+        case OP_LDUR:
+        case OP_STUR:
+            // FORMAT_M: 9-bit signed offset at bits[20:12]
+            *imm = bitfield_s64((int32_t)insnbits, 12, 9);
+            break;
+
+        case OP_MOVZ:
+        case OP_MOVK:
+            // FORMAT_I1: 16-bit immediate at bits[20:5]
+            *imm = (int64_t)bitfield_u32((int32_t)insnbits, 5, 16);
+            break;
+
+        case OP_ADRP:
+            // ADRP: multipurpose_val contains the computed adrp_val already
+            // We set imm=0 here; the actual value comes from vala_sel
+            *imm = 0;
+            break;
+
+        case OP_ADD_RI:
+        case OP_SUB_RI:
+            // FORMAT_RI: 12-bit unsigned immediate at bits[21:10]
+            *imm = (int64_t)bitfield_u32((int32_t)insnbits, 10, 12);
+            break;
+
+        case OP_LSL_RI: {
+            // LSL Xd, Xn, #shift  (aliased from UBFM)
+            // immr = (64 - shift) % 64  => shift = 64 - immr (when immr != 0)
+            uint32_t immr = bitfield_u32((int32_t)insnbits, 16, 6);
+            *imm = (int64_t)(64 - immr);
+            break;
+        }
+
+        case OP_LSR_RI:
+        case OP_ASR:
+            // LSR/ASR Xd, Xn, #shift  => immr = shift
+            *imm = (int64_t)bitfield_u32((int32_t)insnbits, 16, 6);
+            break;
+
+        default:
+            *imm = 0;
+            break;
+    }
     return;
 }
 
@@ -53,7 +232,82 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
  * and write it to *ALU_op.
  */
 static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
-    // Student TODO
+    switch (op) {
+        case OP_LDUR:
+        case OP_STUR:
+            // Address computation: base + offset
+            *ALU_op = PLUS_OP;
+            break;
+
+        case OP_MOVZ:
+            *ALU_op = MOV_OP;
+            break;
+
+        case OP_MOVK:
+            *ALU_op = MOVK_OP;
+            break;
+
+        case OP_ADRP:
+            *ALU_op = PASS_A_OP; // adrp_val already computed; just pass through
+            break;
+
+        case OP_ADD_RI:
+        case OP_ADDS_RR:
+        case OP_CMN_RR:
+            *ALU_op = PLUS_OP;
+            break;
+
+        case OP_SUB_RI:
+        case OP_SUBS_RR:
+        case OP_CMP_RR:
+            *ALU_op = MINUS_OP;
+            break;
+
+        case OP_MVN:
+            *ALU_op = INV_OP;
+            break;
+
+        case OP_ORR_RR:
+            *ALU_op = OR_OP;
+            break;
+
+        case OP_EOR_RR:
+            *ALU_op = EOR_OP;
+            break;
+
+        case OP_ANDS_RR:
+        case OP_TST_RR:
+            *ALU_op = AND_OP;
+            break;
+
+        case OP_LSL_RI:
+        case OP_LSL_RR:
+            *ALU_op = LSL_OP;
+            break;
+
+        case OP_LSR_RI:
+        case OP_LSR_RR:
+            *ALU_op = LSR_OP;
+            break;
+
+        case OP_ASR:
+            *ALU_op = ASR_OP;
+            break;
+
+        case OP_B:
+        case OP_B_COND:
+        case OP_BL:
+        case OP_RET:
+            // Pass through val_a (used for branch target / return addr storage)
+            *ALU_op = PASS_A_OP;
+            break;
+
+        case OP_NOP:
+        case OP_HLT:
+        default:
+            *ALU_op = PASS_A_OP;
+            break;
+    }
     return;
 }
 
@@ -64,12 +318,15 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
  * register to the output side of the register.
  */
 comb_logic_t copy_m_ctl_sigs(m_ctl_sigs_t *dest, m_ctl_sigs_t *src) {
-    // Student TODO
+    dest->dmem_read  = src->dmem_read;
+    dest->dmem_write = src->dmem_write;
     return;
 }
 
 comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
-    // Student TODO
+    dest->dst_sel  = src->dst_sel;
+    dest->wval_sel = src->wval_sel;
+    dest->w_enable = src->w_enable;
     return;
 }
 
@@ -79,7 +336,75 @@ comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
  * Update fix_regs to determine whether 31 represents SP or XZR.
  */
 comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // For most instructions, register 31 = SP.
+    // But for flag-setting ops where register 31 acts as a discard target,
+    // or for instructions that use XZR as source/dest: register 31 = XZR.
+    //
+    // Instructions using XZR (not SP) for register 31:
+    //   CMP_RR, CMN_RR, TST_RR: dst = XZR (discard result)
+    //   ADDS_RR, SUBS_RR, ANDS_RR: both Rn and Rm use XZR if 31
+    //   MOVZ: dst = XZR is valid but unusual
+    //   For STUR/LDUR: the base address register (Rn) uses SP if 31
+    //
+    // Convention: SP_NUM = 31, XZR_NUM = 32
+    // We remap register 31 to XZR_NUM for instructions where 31 = XZR.
+
+    switch (op) {
+        // These ops use XZR (not SP) when register field == 31
+        case OP_ADDS_RR:
+        case OP_CMN_RR:
+        case OP_SUBS_RR:
+        case OP_CMP_RR:
+        case OP_MVN:
+        case OP_ORR_RR:
+        case OP_EOR_RR:
+        case OP_ANDS_RR:
+        case OP_TST_RR:
+        case OP_LSL_RR:
+        case OP_LSR_RR:
+        case OP_LSL_RI:
+        case OP_LSR_RI:
+        case OP_ASR:
+        case OP_MOVZ:
+        case OP_MOVK:
+            // Register file uses XZR for reg 31 in these ops
+            if (*src1 == SP_NUM) *src1 = XZR_NUM;
+            if (*src2 == SP_NUM) *src2 = XZR_NUM;
+            if (*dst  == SP_NUM) *dst  = XZR_NUM;
+            break;
+
+        // LDUR/STUR: Rn (base) can be SP; Rt uses XZR
+        case OP_LDUR:
+            // src1 = Rn (base address, can be SP), dst = Rt (XZR if 31)
+            if (*dst == SP_NUM) *dst = XZR_NUM;
+            break;
+
+        case OP_STUR:
+            // src1 = Rn (base, can be SP), src2 = Rt (data, XZR if 31)
+            if (*src2 == SP_NUM) *src2 = XZR_NUM;
+            break;
+
+        // ADD/SUB (immediate): Rn and Rd can be SP
+        case OP_ADD_RI:
+        case OP_SUB_RI:
+            // SP stays as SP_NUM (31)
+            break;
+
+        // Branch instructions
+        case OP_B:
+        case OP_B_COND:
+        case OP_BL:
+        case OP_NOP:
+        case OP_HLT:
+            break;
+
+        case OP_RET:
+            // src1 = Rn; if 31 it's SP (unusual) but let's keep it as SP
+            break;
+
+        default:
+            break;
+    }
     return;
 }
 
@@ -108,49 +433,81 @@ comb_logic_t format_other(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t format_m(uint32_t insnbits, opcode_t op, uint8_t *src1,
                       uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // LDUR/STUR: bits[9:5] = Rn (base), bits[4:0] = Rt (target/source)
+    *src1 = (uint8_t)bitfield_u32((int32_t)insnbits, 5, 5);   // Rn
+    *dst  = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);   // Rt
+    // For STUR: src2 = Rt (the data register), set via D_sigs.src2_sel
+    // For LDUR: src2 unused from regfile directly (no second source)
+    *src2 = XZR_NUM;
     return;
 }
 
 comb_logic_t format_i1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // MOVZ: Rd = bits[4:0]; no source registers
+    // MOVK: Rd = bits[4:0]; Rd is also read (for keeping existing bits)
+    *dst  = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);
+    if (op == OP_MOVK) {
+        *src1 = *dst; // MOVK reads the existing register value
+    } else {
+        *src1 = XZR_NUM; // MOVZ: val_a = XZR = 0
+    }
+    *src2 = XZR_NUM;
     return;
 }
 
 comb_logic_t format_i2(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // ADRP: Rd = bits[4:0]; no source registers (uses PC via vala_sel=1)
+    *dst  = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
     return;
 }
 
 comb_logic_t format_rr(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // Most RR instructions: Rd = bits[4:0], Rn = bits[9:5], Rm = bits[20:16]
+    *dst  = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);
+    *src1 = (uint8_t)bitfield_u32((int32_t)insnbits, 5, 5);
+    *src2 = (uint8_t)bitfield_u32((int32_t)insnbits, 16, 5);
     return;
 }
 
 comb_logic_t format_ri(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // ADD/SUB (immediate), shifts: Rd = bits[4:0], Rn = bits[9:5]
+    *dst  = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);
+    *src1 = (uint8_t)bitfield_u32((int32_t)insnbits, 5, 5);
+    *src2 = XZR_NUM;
     return;
 }
 
 comb_logic_t format_b1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // B/BL: no source/dest general-purpose registers used
+    // (BL writes to X30, handled via dst_sel in W_sigs)
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
+    *dst  = XZR_NUM;
     return;
 }
 
 comb_logic_t format_b2(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // B.cond: no registers
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
+    *dst  = XZR_NUM;
     return;
 }
 
 comb_logic_t format_b3(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    // RET: Rn = bits[9:5] (return address register, default X30)
+    *src1 = (uint8_t)bitfield_u32((int32_t)insnbits, 5, 5);
+    *src2 = XZR_NUM;
+    *dst  = XZR_NUM;
     return;
 }
 
@@ -185,6 +542,49 @@ comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
  * and decide_alu_op.
  */
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
-    // Student TODO
+    // Pass through opcode and print opcode
+    out->op       = in->op;
+    out->print_op = in->print_op;
+    out->status   = in->status;
+    out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
+
+    // Generate control signals
+    d_ctl_sigs_t D_sigs;
+    generate_DXMW_control(in->op, &D_sigs, &out->X_sigs, &out->M_sigs, &out->W_sigs);
+
+    // Extract source/dest register numbers
+    uint8_t src1 = XZR_NUM, src2 = XZR_NUM, dst = XZR_NUM;
+    extract_regs(in->insnbits, in->op, in->format, &src1, &src2, &dst);
+
+    // Handle dst_sel: BL writes to X30 (register 30), not the extracted dst
+    out->dst = out->W_sigs.dst_sel ? 30 : dst;
+
+    // STUR: src2_sel = 1 means src2 should be the data register (Rt = dst field)
+    // In STUR, D_sigs.src2_sel selects Rt as the data source
+    uint8_t eff_src2 = D_sigs.src2_sel ? dst : src2;
+
+    // Read register file
+    uint64_t val_a = 0, val_b = 0;
+    regfile_read(src1, eff_src2, &val_a, &val_b);
+    out->val_a = val_a;
+    out->val_b = val_b;
+
+    // Save source register numbers for forwarding
+    D_src1 = src1;
+    D_src2 = eff_src2;
+
+    // Extract immediate value
+    extract_immval(in->insnbits, in->op, &out->val_imm);
+
+    // Extract hw field for MOV/MOVK instructions (bits[22:21], scale by 16)
+    // hw field: bits[22:21] give shift amount in units of 16 bits
+    out->val_hw = (uint8_t)(bitfield_u32((int32_t)in->insnbits, 21, 2) * 16);
+
+    // Determine ALU operation
+    decide_alu_op(in->op, &out->ALU_op);
+
+    // Extract condition for B.cond: bits[3:0]
+    out->cond = (cond_t)bitfield_u32((int32_t)in->insnbits, 0, 4);
+
     return;
 }

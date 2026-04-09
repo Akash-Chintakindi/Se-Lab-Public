@@ -27,6 +27,36 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  * copy_w_ctl_signals and dmem.
  */
 comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
-    // Student TODO
+    // Pass through metadata
+    out->op       = in->op;
+    out->print_op = in->print_op;
+    out->status   = in->status;
+    out->dst      = in->dst;
+    out->val_ex   = in->val_ex;
+
+    // Copy writeback control signals
+    copy_w_ctl_sigs(&out->W_sigs, &in->W_sigs);
+
+    // Store M_PC for exception handling (PC of excepting instruction)
+    M_PC = in->multipurpose_val.seq_succ_PC;
+
+    // Access data memory if needed
+    bool     dmem_err = false;
+    uint64_t dmem_rval = 0;
+
+    dmem(in->val_ex,          // address (computed by ALU)
+         in->val_b,           // write value (for STUR)
+         in->M_sigs.dmem_read,
+         in->M_sigs.dmem_write,
+         &dmem_rval,
+         &dmem_err);
+
+    out->val_mem = dmem_rval;
+
+    // Set bad address status if memory access failed
+    if (dmem_err) {
+        out->status = STAT_ADR;
+    }
+
     return;
 }

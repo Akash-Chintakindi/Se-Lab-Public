@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make week1:*)",
+      "Bash(bin/test-hw)",
+      "Bash(make week2:*)",
+      "Bash(bin/test-se -w 2)",
+      "Bash(bin/se -p testcases/basics/basic)",
+      "Bash(bin/se-ref -p testcases/basics/basic)",
+      "Bash(bin/se -i testcases/basics/basic -v 1)",
+      "Bash(bin/se-ref -i testcases/basics/basic -v 1)",
+      "Bash(bin/se-ref-wk2 -i testcases/basics/basic -v 1)",
+      "Bash(bin/se -i testcases/basics/basic)",
+      "Bash(bin/se-ref-wk2 testcases/basics/basic)",
+      "Bash(bin/se testcases/basics/basic)",
+      "Bash(echo \"=== EXIT: $? ===\")",
+      "Bash(bin/se-ref-wk2 -i testcases/basics/add -v 1)",
+      "Bash(bin/se-ref-wk2 -i testcases/basics/add -c checkpoints/ref_add.out)",
+      "Bash(bin/se -i testcases/basics/add -c checkpoints/stu_add.out)",
+      "Bash(bin/test-se -w 2 -v 1)",
+      "Bash(bin/test-se -w 2 -v 2)",
+      "Bash(bin/se-ref-wk2 -i testcases/basics/basic -c checkpoints/ref_basic.out)",
+      "Bash(bin/se -i testcases/branch/pipeminus/branch_taken -v 1 -l 40)",
+      "Bash(bin/se-ref-wk2 -i testcases/branch/pipeminus/branch_taken -v 1 -l 40)",
+      "Bash(grep -c \"^$\")"
+    ]
+  }
+}
