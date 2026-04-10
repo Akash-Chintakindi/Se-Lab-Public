@@ -164,7 +164,8 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     bool imem_err = 0;
     uint64_t current_PC = 0;
 
-    // For select_PC's framework check: val_a is the register value for RET
+    // val_a = pred_PC so framework check never fires in select_PC;
+    // RET-from-main is handled by handle_hazards instead.
     uint64_t val_a = in->pred_PC;
 
     select_PC(in->pred_PC,
@@ -173,6 +174,11 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
               M_out->op, M_out->cond_holds,
               M_out->multipurpose_val.seq_succ_PC,
               &current_PC);
+
+    // B.cond misprediction correction: if B.cond in M stage was not taken
+    if (M_out->op == OP_B_COND && !M_out->cond_holds) {
+        current_PC = M_out->multipurpose_val.seq_succ_PC;
+    }
 
     /*
      * Students: This case is for generating HLT instructions
@@ -242,6 +248,16 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         in->status = STAT_AOK;
     }
     out->status = in->status;
+
+    // RET correction: override F_PC for next cycle (handle_hazards will bubble D)
+    if (D_out->op == OP_RET) {
+        uint8_t rn = (uint8_t)bitfield_u32((int32_t)D_out->insnbits, 5, 5);
+        uint64_t ret_addr, tmp;
+        regfile_read(rn, XZR_NUM, &ret_addr, &tmp);
+        if (ret_addr != RET_FROM_MAIN_ADDR) {
+            F_PC = ret_addr;
+        }
+    }
 
     return;
 }

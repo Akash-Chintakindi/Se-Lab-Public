@@ -104,9 +104,10 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     // Student TODO
 #else
     bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS;
-    bool f_bubble = (D_opcode == OP_RET && D_val_a == RET_FROM_MAIN_ADDR);
-    pipe_control_stage(S_FETCH, f_bubble && !f_stall, f_stall);
-    pipe_control_stage(S_DECODE, false, false);
+    bool ret_from_main = (D_opcode == OP_RET && D_val_a == RET_FROM_MAIN_ADDR);
+    bool ret_normal = (D_opcode == OP_RET && D_val_a != RET_FROM_MAIN_ADDR);
+    pipe_control_stage(S_FETCH, ret_from_main && !f_stall, f_stall);
+    pipe_control_stage(S_DECODE, ret_normal, false);
     pipe_control_stage(S_EXECUTE, false, false);
     pipe_control_stage(S_MEMORY, false, false);
     pipe_control_stage(S_WBACK, false, false);
