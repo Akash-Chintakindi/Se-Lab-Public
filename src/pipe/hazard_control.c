@@ -14,6 +14,7 @@
 
 #include "hazard_control.h"
 #include "machine.h"
+#include "mem.h"
 
 extern machine_t guest;
 extern mem_status_t dmem_status;
@@ -103,7 +104,8 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     // Student TODO
 #else
     bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS;
-    pipe_control_stage(S_FETCH, false, f_stall);
+    bool f_bubble = (D_opcode == OP_RET && D_val_a == RET_FROM_MAIN_ADDR);
+    pipe_control_stage(S_FETCH, f_bubble && !f_stall, f_stall);
     pipe_control_stage(S_DECODE, false, false);
     pipe_control_stage(S_EXECUTE, false, false);
     pipe_control_stage(S_MEMORY, false, false);

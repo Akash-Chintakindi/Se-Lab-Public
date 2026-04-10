@@ -22,7 +22,22 @@
       "Bash(bin/se-ref-wk2 -i testcases/basics/basic -c checkpoints/ref_basic.out)",
       "Bash(bin/se -i testcases/branch/pipeminus/branch_taken -v 1 -l 40)",
       "Bash(bin/se-ref-wk2 -i testcases/branch/pipeminus/branch_taken -v 1 -l 40)",
-      "Bash(grep -c \"^$\")"
+      "Bash(grep -c \"^$\")",
+      "Bash(bin/se-ref-wk2 -i testcases/branch/pipeminus/branch_taken -d 1)",
+      "Bash(bin/se-ref-wk2 -i testcases/branch/pipeminus/branch_taken -d 2)",
+      "Bash(bin/se-ref-wk2 -i testcases/branch/pipeminus/branch_taken -d 3)",
+      "Bash(bin/se -i testcases/branch/pipeminus/branch_taken -d 3)",
+      "Bash(bin/se -i testcases/branch/pipeminus/branch_taken -d 1)",
+      "Bash(bin/se -i testcases/basics/add)",
+      "Bash(bin/se -i testcases/branch/pipeminus/branch_taken)",
+      "Bash(bin/se-ref-wk2 -i testcases/branch/pipeminus/bl -c /dev/stdout)",
+      "Bash(bin/se-ref-wk2 -i testcases/branch/pipeminus/branch_not_taken -c /dev/stdout)",
+      "Bash(ls testcase*/)",
+      "Bash(bin/se -i testcases/basics/basic -d 1)",
+      "Bash(bin/se -i testcases/basics/basic -d 2)",
+      "Bash(timeout 5 /u/akashc/se-lab-bob/bin/se-ref-wk2 -i /u/akashc/se-lab-bob/testcases/branch/pipeminus/branch_taken -c /dev/stdout)",
+      "Bash(/u/akashc/se-lab-bob/bin/test-se -w 2)",
+      "Read(//tmp/**)"
     ]
   }
 }

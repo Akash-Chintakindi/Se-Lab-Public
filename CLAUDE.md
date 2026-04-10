@@ -98,35 +98,68 @@ if (!current_PC || F_in->status == STAT_HLT || F_in->status == STAT_INS) { /* ge
 
 All 5 stage files implemented. Build succeeds with `make week2`.
 
-### Test Results (checkpoint comparison with -c flag)
-**Passing (48 tests):** basics (5/5), alu/pipeminus (15/15), alu/print_pipeminus (10/11), mem/pipeminus (3/4), exceptions/pipeminus (17/21)
+### Test Results (50 pass, 14 fail) — checkpoint comparison with -c flag
+**Passing (50 tests):** basics (5/5), alu/pipeminus (15/15), alu/print_pipeminus (10/11), mem/pipeminus (3/4), exceptions/pipeminus (17/21)
 
 **Failing (14 tests):**
-1. **Branch tests (6)**: bcond, bcond_cmn, bl, bl_ret, branch_not_taken, branch_taken — all hit 500 cycles (infinite loop). Expected Status: HLT.
-2. **Exception tests (4)**: bad_insn_1-4 — wrong PC values only (off by a few bytes)
+1. **Branch tests (6)**: bcond, bcond_cmn, bl, bl_ret, branch_not_taken, branch_taken — all hit 500 cycles (infinite loop)
+2. **Exception tests (4)**: bad_insn_1-4 — wrong PC values
 3. **Print test (1)**: alu/print_pipeminus/cmp — 500 cycles, infinite loop
 4. **Mem test (1)**: mem/pipeminus/adrp3 — wrong cycle count (27 vs 21), wrong PC, INS vs HLT
 5. **Application tests (2)**: 20thfib, 5factorial — 500 cycles, infinite loop
 
-### The val_a Problem (MAIN BLOCKER)
+### Reference Expected Status for Failing Tests
+- HLT: branch_taken, bl_ret, branch_not_taken, bcond, bcond_cmn, 20thfib, cmp
+- INS: bl, 5factorial
+- (bad_insn and adrp3 are separate issues)
 
-The `select_PC` framework check `if (D_opcode == OP_RET && val_a == RET_FROM_MAIN_ADDR)` needs val_a to be:
-- **Non-zero** for simple tests (add, basic, etc.) where RET is at the END of text segment → framework should NOT fire → fetch past text → imem error → INS
-- **Zero (=RET_FROM_MAIN_ADDR)** for branch/application tests where RET is NOT at end of text → framework MUST fire → PC=0 → HLT
+### The val_a Problem (MAIN BLOCKER for 9 infinite-loop tests)
 
-Current code uses `val_a = in->pred_PC` for PIPE- mode, which is always non-zero → framework never fires → simple tests pass (INS) but branch tests loop forever.
+The `select_PC` framework check `if (D_opcode == OP_RET && val_a == RET_FROM_MAIN_ADDR)` needs val_a=0 to fire.
+- Tests needing framework to fire (HLT): branch_taken, bl_ret, bcond, bcond_cmn, branch_not_taken, 20thfib, cmp — all have x30=0 (never modified by BL)
+- Tests needing framework NOT to fire (INS): basic, add, all simple tests — also have x30=0!
+- Tests where BL modifies x30: bl (INS), 5factorial (INS) — x30≠0, framework shouldn't fire
 
-**Key insight**: Using `val_a = X_out->val_a` (the val_a of the instruction that was in decode the PREVIOUS cycle) gives the correct behavior for simple tests (non-zero because previous instruction's src1 ≠ x30) BUT does NOT work for all branch tests (e.g., branch_taken: STUR before RET has val_a = ~0 from x5, not 0).
+**The paradox**: basic and branch_taken BOTH have x30=0, but basic needs INS (framework should NOT fire) and branch_taken needs HLT (framework MUST fire).
 
-**What needs investigation**:
-- How does the reference compute val_a for the framework check in PIPE- mode?
-- Possibly: fetch should read the register file directly for RET's source register (x30 typically), but this conflicts with simple tests where x30 = 0 and text segment boundary would give INS
-- Unless: for simple tests like `add`, the text segment boundary is BEFORE the address that would be fetched if the framework check fires. Need to verify: does the framework check fire but the imem error happens first somehow? (No — select_PC runs before imem.)
-- Another possibility: maybe fetch should only use the framework check when D_out's RET src register has been forwarded/is valid (but there's no forwarding in PIPE-)
-- Maybe the answer is simpler: look at what X_out->val_a actually contains for EACH failing test and see if there's a pattern
+**Approaches tried and results:**
+1. `val_a = in->pred_PC` (always non-zero) → framework never fires → 50 pass, branch/app tests loop forever (CURRENT)
+2. `val_a = X_out->val_a` → broke basic/add/nop etc. because X_out from decoded bubble has val_a=0 → only 42 pass
+3. `val_a = regfile_read(x30)` → ALL simple tests break because x30=0 always triggers framework → HLT instead of INS
+4. regfile_read + addr_in_imem override → addr_in_imem range is TOO WIDE (TEXT_SEG=0x400000 to DATA_SEG=0x800000 default), so pred_PC is always "in imem" even past actual code
 
-### bad_insn Tests (PC Offset Issue)
-bad_insn_1-4 only differ in PC value. Reference PC is much smaller (e.g., 0x1238 vs our 0x40012c). This suggests a different issue — possibly M_PC computation. Currently `M_PC = in->multipurpose_val.seq_succ_PC` but it should perhaps be the actual PC of the instruction, not seq_succ.
+**Memory layout facts:**
+- Default seg_starts: {0x0, 0x400000, 0x800000, 0x10000000, ...}
+- ELF loader updates TEXT_SEG/DATA_SEG from .text/.data section addresses
+- If no .data section (e.g., basic test), DATA_SEG stays at default 0x800000
+- So addr_in_imem covers 0x400110 to 0x800000 for basic — WAY past actual code
+
+**Key observation about basic test reference behavior:**
+- Reference: 6 cycles, PC=0x400118, Status=INS
+- basic has only RET at 0x400110. After fetching RET, pred_PC=0x400114.
+- At 0x400114: no real instruction, likely all zeros → itable[0] = OP_ERROR → STAT_INS
+- So reference does NOT fire framework for basic. It fetches 0x400114, gets OP_ERROR, sets INS.
+- This means reference uses val_a = something non-zero for basic (pred_PC approach matches!)
+
+**Key observation about branch_taken reference behavior:**
+- Reference: 39 cycles, PC=0x400170, Status=HLT
+- branch_taken loops forever without framework (RET→.helper→B→.goback→RET→...)
+- Reference MUST fire framework. This means val_a=0 when RET is in decode.
+- x30=0 throughout (no BL). So regfile read WOULD give 0.
+- But regfile read also gives 0 for basic, which would break basic.
+
+**UNSOLVED**: What mechanism does the reference use to fire the framework for branch_taken but NOT for basic? Both have x30=0. Possible leads:
+- Maybe decode_instr for a bubble produces X_in->val_a ≠ 0 for some reason (need to check what extract_regs gives for OP_NOP with insnbits=0)
+- Maybe the answer involves the F_in->status latch behavior
+- Maybe handle_hazards is supposed to do something for PIPE- mode regarding RET detection
+- Consider: what if val_a should come from D_out fields that decode wrote in a previous cycle? D_out doesn't have val_a but maybe multipurpose_val is used?
+- Consider: what if the student needs to read regfile in fetch ONLY when x30 has actually been written (tracking via pipeline)?
+
+### bad_insn Tests (PC Issue)
+bad_insn_1-4 show wrong PC values. Reference PCs are much smaller. M_PC = in->multipurpose_val.seq_succ_PC (which is PC+4 of the instruction). Need to investigate what PC the reference reports — could be related to how STAT_INS propagates.
+
+### adrp3 Test
+Wrong cycle count (27 vs 21), wrong PC, INS vs HLT. Likely related to the val_a problem (has branches/RET).
 
 ### Files Modified
 - `src/pipe/instr_Fetch.c` — select_PC, predict_PC, fix_instr_aliases, fetch_instr
@@ -136,3 +169,6 @@ bad_insn_1-4 only differ in PC value. Reference PC is much smaller (e.g., 0x1238
 - `src/pipe/instr_Writeback.c` — writeback logic
 - `src/pipe/hazard_control.c` — PIPE- hazard handling (unchanged from starter)
 - `src/pipe/forward.c` — empty (PIPE- mode, no forwarding needed)
+
+### Handout Note
+The handout incorrectly states forward_reg() needs to be called in instr_Decode(). It is already called for you in proc.c.
