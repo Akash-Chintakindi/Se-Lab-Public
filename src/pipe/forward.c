@@ -5,6 +5,7 @@
  **************************************************************************/
 
 #include "forward.h"
+#include "hw_elts.h"
 #include <stdbool.h>
 
 /* STUDENT TO-DO:
@@ -19,7 +20,23 @@ comb_logic_t forward_reg(uint8_t D_src1, uint8_t D_src2, uint8_t X_dst,
                          bool W_w_enable, uint64_t *val_a, uint64_t *val_b) {
 
 #ifdef PIPE
-    // your implementation
+    // Forward val_a (D_src1): priority X > M > W
+    if (X_w_enable && X_dst == D_src1 && D_src1 != XZR_NUM) {
+        *val_a = X_val_ex;
+    } else if (M_w_enable && M_dst == D_src1 && D_src1 != XZR_NUM) {
+        *val_a = M_wval_sel ? M_val_mem : M_val_ex;
+    } else if (W_w_enable && W_dst == D_src1 && D_src1 != XZR_NUM) {
+        *val_a = W_wval_sel ? W_val_mem : W_val_ex;
+    }
+
+    // Forward val_b (D_src2): priority X > M > W
+    if (X_w_enable && X_dst == D_src2 && D_src2 != XZR_NUM) {
+        *val_b = X_val_ex;
+    } else if (M_w_enable && M_dst == D_src2 && D_src2 != XZR_NUM) {
+        *val_b = M_wval_sel ? M_val_mem : M_val_ex;
+    } else if (W_w_enable && W_dst == D_src2 && D_src2 != XZR_NUM) {
+        *val_b = W_wval_sel ? W_val_mem : W_val_ex;
+    }
 #endif
     return;
 }

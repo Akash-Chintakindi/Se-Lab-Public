@@ -40,9 +40,10 @@ select_PC(uint64_t pred_PC,                  // The predicted PC
     // Modify starting here.
 
 #ifdef PIPE
-    // RET: use the register value as the return address
-    if (D_opcode == OP_RET) {
-        *current_PC = val_a;
+    // RET correction: when RET has advanced to X, val_a (from decode+forward)
+    // holds the real return address. Override any predicted PC.
+    if (X_out->op == OP_RET) {
+        *current_PC = X_out->val_a;
         return;
     }
 
@@ -52,6 +53,8 @@ select_PC(uint64_t pred_PC,                  // The predicted PC
         return;
     }
 #endif
+    (void)D_opcode;
+    (void)val_a;
 
     // Default: use predicted PC
     *current_PC = pred_PC;
@@ -175,10 +178,21 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
               M_out->multipurpose_val.seq_succ_PC,
               &current_PC);
 
+#ifdef PIPE
+    // When select_PC corrects the PC (RET or mispred), clear any stale
+    // F_in->status from a previous cycle's error fetch during stall.
+    if (current_PC && (X_out->op == OP_RET ||
+        (M_out->op == OP_B_COND && !M_out->cond_holds))) {
+        F_in->status = STAT_AOK;
+    }
+#endif
+
+#ifndef PIPE
     // B.cond misprediction correction: if B.cond in M stage was not taken
     if (M_out->op == OP_B_COND && !M_out->cond_holds) {
         current_PC = M_out->multipurpose_val.seq_succ_PC;
     }
+#endif
 
     /*
      * Students: This case is for generating HLT instructions
@@ -235,6 +249,8 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
             out->op = OP_ERROR;
             out->print_op = OP_ERROR;
             out->format = FORMAT_ERROR;
+            // Store seq_succ_PC so M_PC can recover the excepting instruction's PC
+            out->multipurpose_val.seq_succ_PC = current_PC + 4;
         }
     }
 
@@ -249,6 +265,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     }
     out->status = in->status;
 
+#ifndef PIPE
     // RET correction: override F_PC for next cycle (handle_hazards will bubble D)
     if (D_out->op == OP_RET) {
         uint8_t rn = (uint8_t)bitfield_u32((int32_t)D_out->insnbits, 5, 5);
@@ -258,6 +275,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
             F_PC = ret_addr;
         }
     }
+#endif
 
     return;
 }

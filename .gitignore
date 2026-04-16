@@ -13,3 +13,5 @@ example.sh
 rename.sh
 .vscode/settings.json
 build/
+CLAUDE.md
+.claude/

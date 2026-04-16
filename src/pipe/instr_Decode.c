@@ -381,7 +381,9 @@ comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
 
         case OP_STUR:
             // src1 = Rn (base, can be SP), src2 = Rt (data, XZR if 31)
+            // dst = Rt from format_m; when Rt=31 it means XZR, not SP
             if (*src2 == SP_NUM) *src2 = XZR_NUM;
+            if (*dst  == SP_NUM) *dst  = XZR_NUM;
             break;
 
         // ADD/SUB (immediate): Rn and Rd can be SP

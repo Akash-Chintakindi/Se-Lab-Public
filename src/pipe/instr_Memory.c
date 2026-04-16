@@ -12,6 +12,7 @@
 #include <stdint.h>
 
 extern uint64_t M_PC;
+extern uint64_t F_PC;
 
 extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
 
@@ -38,7 +39,8 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     copy_w_ctl_sigs(&out->W_sigs, &in->W_sigs);
 
     // Store M_PC for exception handling (PC of excepting instruction)
-    M_PC = in->multipurpose_val.seq_succ_PC;
+    // seq_succ_PC is PC+4, so subtract 4 to get the instruction's own PC
+    M_PC = in->multipurpose_val.seq_succ_PC - 4;
 
     // Access data memory if needed
     bool     dmem_err = false;
@@ -57,6 +59,15 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     if (dmem_err) {
         out->status = STAT_ADR;
     }
+
+#ifdef PIPE
+    // When an exception instruction passes through M, set F_PC to M_PC so
+    // that proc.c's final PC update (guest.proc->PC = F_PC) captures the
+    // exception PC on the cycle the loop exits.
+    if (out->status == STAT_INS || out->status == STAT_ADR) {
+        F_PC = M_PC;
+    }
+#endif
 
     return;
 }
