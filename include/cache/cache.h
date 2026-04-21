@@ -28,12 +28,13 @@ typedef struct cache_line {
     bool valid;   // true if this line actually contains data, false if empty
     uword_t tag;  // identifier to differentiate between lines in the set
     bool dirty;   // true if this line has been written too
-    uword_t lru;  // indicates the last time this line was accessed
     byte_t *data; // the pointer to the buffer containing the data
 } cache_line_t;
 
 typedef struct cache_set {
     cache_line_t *lines;
+    uword_t lru_matrix; // Store the cache matrix from AC Lab. Supports A=[1,8].
+    uword_t next_lru;   // Store the next line that is least recently used (after updating the lru_matrix).
 } cache_set_t;
 
 typedef struct cache {

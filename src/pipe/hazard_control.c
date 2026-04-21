@@ -99,6 +99,24 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     /* Students: Change this code */
     // This will need to be updated in week 2, good enough for week 1
 #ifdef PIPE
+    // deassert_flags is a single-cycle signal. Reset it here so stale values
+    // from a previous stall or exception don't block NZCV writes forever.
+    deassert_flags = false;
+
+    // Cache miss stall: mem.c returns IN_FLIGHT during the d-cycle miss
+    // delay. Freeze F/D/X/M in place so the memory_instr re-executes on the
+    // next cycle, and bubble W so it does not latch the bogus val_mem=0.
+    if (dmem_status == IN_FLIGHT) {
+        pipe_control_stage(S_FETCH, false, true);
+        pipe_control_stage(S_DECODE, false, true);
+        pipe_control_stage(S_EXECUTE, false, true);
+        pipe_control_stage(S_MEMORY, false, true);
+        pipe_control_stage(S_WBACK, true, false);
+        // Don't let a flag-setting X instruction commit NZCV while stalled.
+        deassert_flags = true;
+        return;
+    }
+
     bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS;
     bool ret_from_main = (D_opcode == OP_RET && D_val_a == RET_FROM_MAIN_ADDR);
     bool ret = check_ret_hazard(D_opcode) && !ret_from_main;
