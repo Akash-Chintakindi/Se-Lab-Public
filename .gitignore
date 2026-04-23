@@ -15,3 +15,4 @@ rename.sh
 build/
 CLAUDE.md
 .claude/
+runner
