@@ -261,6 +261,11 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
 
     *val_e    = result;
     *nzcv_dst = new_nzcv;
+#ifdef EC
+    if (ALUop == CBZ_OP)       *cond_val = (result == 0);
+    else if (ALUop == CBNZ_OP) *cond_val = (result != 0);
+    else
+#endif
     *cond_val = cond_holds(cond, new_nzcv);
 }
 

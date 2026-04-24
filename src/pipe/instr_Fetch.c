@@ -40,9 +40,13 @@ select_PC(uint64_t pred_PC,                  // The predicted PC
     // Modify starting here.
 
 #ifdef PIPE
-    // RET correction: when RET has advanced to X, val_a (from decode+forward)
-    // holds the real return address. Override any predicted PC.
-    if (X_out->op == OP_RET) {
+    // RET/BR/BLR correction: when the indirect branch is in X, val_a holds the
+    // real target. Override any predicted PC.
+    if (X_out->op == OP_RET
+#ifdef EC
+        || X_out->op == OP_BR || X_out->op == OP_BLR
+#endif
+        ) {
         *current_PC = X_out->val_a;
         return;
     }
@@ -98,6 +102,22 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
             *predicted_PC = (uint64_t)((int64_t)current_PC + offset);
             break;
         }
+
+#ifdef EC
+        case OP_CBZ:
+        case OP_CBNZ: {
+            // predict taken: 19-bit signed offset at bits[23:5], shifted left 2
+            int64_t offset = bitfield_s64((int32_t)insnbits, 5, 19) << 2;
+            *predicted_PC = (uint64_t)((int64_t)current_PC + offset);
+            break;
+        }
+        case OP_BR:
+        case OP_BLR:
+            // target in register — cannot predict, use sequential
+            *predicted_PC = current_PC + 4;
+            break;
+#endif
+
         default:
             // All other instructions: predict sequential
             *predicted_PC = current_PC + 4;
@@ -147,6 +167,15 @@ static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
         else if (*op == OP_ADDS_RR) *op = OP_CMN_RR;
         else if (*op == OP_ANDS_RR) *op = OP_TST_RR;
     }
+
+#ifdef EC
+    // CSINC is aliased under CSEL (same top-11 bits); bit[10]=1 → CSINC
+    if (*op == OP_CSEL && bitfield_u32((int32_t)insnbits, 10, 1) == 1)
+        *op = OP_CSINC;
+    // CSINV is aliased under CSNEG (same top-11 bits); bit[10]=0 → CSINV
+    if (*op == OP_CSNEG && bitfield_u32((int32_t)insnbits, 10, 1) == 0)
+        *op = OP_CSINV;
+#endif
     return;
 }
 
@@ -181,8 +210,11 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
 #ifdef PIPE
     // When select_PC corrects the PC (RET or mispred), clear any stale
     // F_in->status from a previous cycle's error fetch during stall.
-    if (current_PC && (X_out->op == OP_RET ||
-        (M_out->op == OP_B_COND && !M_out->cond_holds))) {
+    if (current_PC && (X_out->op == OP_RET
+#ifdef EC
+        || X_out->op == OP_BR || X_out->op == OP_BLR
+#endif
+        || (M_out->op == OP_B_COND && !M_out->cond_holds))) {
         F_in->status = STAT_AOK;
     }
 #endif

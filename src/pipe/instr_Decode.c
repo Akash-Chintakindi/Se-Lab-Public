@@ -163,6 +163,32 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
         case OP_HLT:
             break;
 
+#ifdef EC
+        case OP_CSEL:
+        case OP_CSINV:
+        case OP_CSINC:
+        case OP_CSNEG:
+            X_sigs->valb_sel = true;   // Rm (val_b) is the false-branch operand
+            W_sigs->w_enable = true;
+            break;
+
+        case OP_CBZ:
+        case OP_CBNZ:
+            // no writeback; branch correction handled via hazard at D stage
+            break;
+
+        case OP_BR:
+            // indirect branch, no writeback
+            break;
+
+        case OP_BLR:
+            // indirect branch+link: write seq_succ to X30
+            X_sigs->vala_sel = true;   // use seq_succ_PC as the link value
+            W_sigs->dst_sel  = true;   // write to X30
+            W_sigs->w_enable = true;
+            break;
+#endif
+
         default:
             break;
     }
@@ -307,6 +333,17 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         default:
             *ALU_op = PASS_A_OP;
             break;
+
+#ifdef EC
+        case OP_CSEL:  *ALU_op = CSEL_OP;   break;
+        case OP_CSINV: *ALU_op = CSINV_OP;  break;
+        case OP_CSINC: *ALU_op = CSINC_OP;  break;
+        case OP_CSNEG: *ALU_op = CSNEG_OP;  break;
+        case OP_CBZ:   *ALU_op = CBZ_OP;    break;
+        case OP_CBNZ:  *ALU_op = CBNZ_OP;   break;
+        case OP_BR:    *ALU_op = PASS_A_OP; break;
+        case OP_BLR:   *ALU_op = PASS_A_OP; break;
+#endif
     }
     return;
 }
@@ -403,6 +440,21 @@ comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
         case OP_RET:
             // src1 = Rn; if 31 it's SP (unusual) but let's keep it as SP
             break;
+
+#ifdef EC
+        case OP_CSEL:
+        case OP_CSINV:
+        case OP_CSINC:
+        case OP_CSNEG:
+        case OP_CBZ:
+        case OP_CBNZ:
+        case OP_BR:
+        case OP_BLR:
+            if (*src1 == SP_NUM) *src1 = XZR_NUM;
+            if (*src2 == SP_NUM) *src2 = XZR_NUM;
+            if (*dst  == SP_NUM) *dst  = XZR_NUM;
+            break;
+#endif
 
         default:
             break;
@@ -526,7 +578,33 @@ comb_logic_t format_s(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    switch (op) {
+        case OP_CSEL:
+        case OP_CSINV:
+        case OP_CSINC:
+        case OP_CSNEG:
+            *dst  = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);   // Rd
+            *src1 = (uint8_t)bitfield_u32((int32_t)insnbits, 5, 5);   // Rn (true)
+            *src2 = (uint8_t)bitfield_u32((int32_t)insnbits, 16, 5);  // Rm (false)
+            break;
+        case OP_CBZ:
+        case OP_CBNZ:
+            *src1 = (uint8_t)bitfield_u32((int32_t)insnbits, 0, 5);   // Rt (compare reg)
+            *src2 = XZR_NUM;
+            *dst  = XZR_NUM;
+            break;
+        case OP_BR:
+        case OP_BLR:
+            *src1 = (uint8_t)bitfield_u32((int32_t)insnbits, 5, 5);   // Rn (target)
+            *src2 = XZR_NUM;
+            *dst  = XZR_NUM;  // BLR writes X30 via dst_sel, not here
+            break;
+        default:
+            *src1 = XZR_NUM;
+            *src2 = XZR_NUM;
+            *dst  = XZR_NUM;
+            break;
+    }
     return;
 }
 #endif
@@ -585,7 +663,13 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // Determine ALU operation
     decide_alu_op(in->op, &out->ALU_op);
 
-    // Extract condition for B.cond: bits[3:0]
+    // Extract condition code: B.cond uses bits[3:0]; CSEL family uses bits[15:12]
+#ifdef EC
+    if (in->op == OP_CSEL || in->op == OP_CSINV ||
+        in->op == OP_CSINC || in->op == OP_CSNEG)
+        out->cond = (cond_t)bitfield_u32((int32_t)in->insnbits, 12, 4);
+    else
+#endif
     out->cond = (cond_t)bitfield_u32((int32_t)in->insnbits, 0, 4);
 
     return;

@@ -20,6 +20,7 @@
 extern machine_t guest;
 extern mem_status_t dmem_status;
 extern bool deassert_flags;
+extern uint64_t F_PC;
 
 /* Use this method to actually bubble/stall a pipeline stage.
  * Call it in handle_hazards(). Do not modify this code. */
@@ -69,12 +70,12 @@ bool check_ret_hazard(opcode_t D_opcode) {
 
 #ifdef EC
 bool check_br_hazard(opcode_t D_opcode) {
-    // Student TODO
-    return false;
+    return D_opcode == OP_BR || D_opcode == OP_BLR;
 }
 
 bool check_cb_hazard(opcode_t D_opcode, uint64_t D_val_a) {
-    // Student TODO
+    if (D_opcode == OP_CBZ)  return D_val_a != 0;  // predicted taken, but not zero
+    if (D_opcode == OP_CBNZ) return D_val_a == 0;  // predicted taken, but zero
     return false;
 }
 #endif
@@ -85,6 +86,9 @@ bool check_mispred_branch_hazard(opcode_t X_opcode, bool X_condval) {
 
 bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
                            opcode_t X_opcode, uint8_t X_dst) {
+#ifdef EC
+    if (D_opcode == OP_BR || D_opcode == OP_BLR) return false;
+#endif
     return X_opcode == OP_LDUR && X_dst != XZR_NUM &&
            (X_dst == D_src1 || X_dst == D_src2);
 }
@@ -122,12 +126,30 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     bool ret = check_ret_hazard(D_opcode) && !ret_from_main;
     bool mispred = check_mispred_branch_hazard(X_opcode, X_condval);
     bool load_use = check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst);
+#ifdef EC
+    // BR/BLR: target in register, stall like RET (stall F, bubble D)
+    bool br = check_br_hazard(D_opcode) && !ret_from_main;
+    // CBZ/CBNZ: predicted taken but condition doesn't hold — bubble D, override F_PC
+    bool cb = !load_use && check_cb_hazard(D_opcode, D_val_a);
+    if (cb) {
+        F_PC = D_out->multipurpose_val.seq_succ_PC;
+    }
+#endif
 
-    // F: stall on HLT/INS, load-use, or RET; bubble on ret-from-main (if not stalled)
-    pipe_control_stage(S_FETCH, ret_from_main && !f_stall, f_stall || load_use || ret);
-    // D: stall on load-use; bubble on RET (non-load-use), misprediction, or ret-from-main
-    //    (ret-from-main must also drop the erroneous sequential fetch in D_in)
-    pipe_control_stage(S_DECODE, (ret && !load_use) || mispred || ret_from_main, load_use);
+    // F: stall on HLT/INS, load-use, RET, or BR/BLR
+    pipe_control_stage(S_FETCH, ret_from_main && !f_stall,
+        f_stall || load_use || ret
+#ifdef EC
+        || br
+#endif
+        );
+    // D: bubble on RET, mispred, ret-from-main, BR/BLR, or CBZ/CBNZ misprediction
+    pipe_control_stage(S_DECODE,
+        (ret && !load_use) || mispred || ret_from_main
+#ifdef EC
+        || (br && !load_use) || cb
+#endif
+        , load_use);
     // X: bubble on load-use or misprediction
     pipe_control_stage(S_EXECUTE, load_use || mispred, false);
     pipe_control_stage(S_MEMORY, false, false);
